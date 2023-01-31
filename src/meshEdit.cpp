@@ -17,12 +17,65 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
 }
 
 VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
-  // TODO: (meshEdit)
-  // This method should collapse the given edge and return an iterator to
-  // the new vertex created by the collapse.
+    // TODO: (meshEdit)
+    // This method should collapse the given edge and return an iterator to
+    // the new vertex created by the collapse.
+    HalfedgeIter h0 = e->halfedge();
+    //get all the point related to h0;
+    VertexIter p0 = h0->vertex();
+    HalfedgeIter leftHalfedgeModify;
+    HalfedgeIter rightHalfedgeModify;
+    FaceIter leftFaceModify;
+    FaceIter rightFaceModify;
+    int countleft=0, countright = 0;
+    //分两组，分别判断每一组的数量
+    for (HalfedgeIter i = h0->next(); p0 != i->vertex(); i = i->next()) {
+        ++countleft;
+        if (i->next()->vertex() == p0) {//last point in the sequence. should connect to p0
+            leftHalfedgeModify = i;
+        }
 
-  showError("collapseEdge() not implemented.");
-  return VertexIter();
+    }
+    VertexIter p1 = h0->twin()->vertex();
+    for (HalfedgeIter i = h0->twin()->next(); p1 != i->vertex(); i = i->next()) {
+        ++countright;
+        if (i->next()->vertex() == p1) {
+            rightHalfedgeModify = i;
+        }
+    }
+    leftFaceModify = h0->face();
+    rightFaceModify = h0->twin()->face();
+    if (countleft == 2) {//face will collapse,
+        leftHalfedgeModify->twin()->twin() = h0->next()->twin();
+        deleteHalfedge(h0->next());
+        deleteHalfedge(leftHalfedgeModify);
+        deleteFace(h0->face());
+    }
+    else {
+        leftHalfedgeModify->next() = h0->next();
+        leftHalfedgeModify->twin()->vertex() = p1;
+        h0->face()->halfedge() = h0->next();//incase the face is refering the deleted halfedge
+    }
+    if (countright == 2) {
+        rightHalfedgeModify->twin()->twin() = h0->twin()->next()->twin();
+        deleteHalfedge(h0->twin()->next());
+        deleteHalfedge(rightHalfedgeModify);
+        deleteFace(h0->twin()->face());
+    }
+    else {
+        rightHalfedgeModify->next() = h0->twin()->next();//change half edge
+        h0->twin()->next()->vertex() = p1;
+        h0->twin()->face()->halfedge() = h0->twin()->next();
+    }
+    p1->position = (p0->position + p1->position) / 2;
+    
+    deleteEdge(e);
+ //   deleteHalfedge(h0->twin());
+ //   deleteHalfedge(h0);
+ //   deleteVertex(h0->vertex());
+    //showError("collapseEdge() not implemented.");
+    return p1;
+    
 }
 
 VertexIter HalfedgeMesh::collapseFace(FaceIter f) {
