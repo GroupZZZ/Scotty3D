@@ -16,11 +16,43 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   return VertexIter();
 }
 
-VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
+/*VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
     // TODO: (meshEdit)
     // This method should collapse the given edge and return an iterator to
     // the new vertex created by the collapse.
     HalfedgeIter h0 = e->halfedge();
+    HalfedgeIter h1 = h0->next();
+    HalfedgeIter h2 = h1->next();
+    HalfedgeIter h3 = h0->twin();
+    HalfedgeIter h4 = h3->next();
+    HalfedgeIter h5 = h4->next();
+    HalfedgeIter h6 = h1->twin();
+    HalfedgeIter h7 = h2->twin();
+    HalfedgeIter h8 = h4->twin();
+    HalfedgeIter h9 = h5->twin();
+
+    // VERTICES
+    VertexIter v0 = h0->vertex();
+    VertexIter v1 = h3->vertex();
+    VertexIter v2 = h8->vertex();
+    VertexIter v3 = h6->vertex();
+    // ...you fill in the rest!...
+
+    // EDGES
+    EdgeIter e1 = h5->edge();
+    EdgeIter e2 = h4->edge();
+    EdgeIter e3 = h2->edge();
+    EdgeIter e4 = h1->edge();
+
+    // ...you fill in the rest!...
+
+    // FACES
+    FaceIter f0 = h0->face();
+    FaceIter f1 = h3->face();
+
+
+
+    //HalfedgeIter h0 = e->halfedge();
     //get all the point related to h0;
     VertexIter p0 = h0->vertex();
     HalfedgeIter leftHalfedgeModify;
@@ -46,10 +78,22 @@ VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
     leftFaceModify = h0->face();
     rightFaceModify = h0->twin()->face();
     if (countleft == 2) {//face will collapse,
-        leftHalfedgeModify->twin()->twin() = h0->next()->twin();
-        deleteHalfedge(h0->next());
-        deleteHalfedge(leftHalfedgeModify);
-        deleteFace(h0->face());
+        h6->next() = h6->next();
+        h6->twin() = h7;
+        h6->vertex() = v3;
+        h6->edge() = e4;
+        h6->face() = h6->face();
+        h7->next() = h7->next();
+        h7->twin() = h6;
+        h7->vertex() = v1;
+        h7->edge() = e4;
+        h7->face() = h7->face();
+
+        deleteHalfedge(h1);
+        deleteHalfedge(h2);
+    //    deleteHalfedge(h0);
+        deleteEdge(e3);
+        deleteFace(f0);
     }
     else {
         leftHalfedgeModify->next() = h0->next();
@@ -57,10 +101,22 @@ VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
         h0->face()->halfedge() = h0->next();//incase the face is refering the deleted halfedge
     }
     if (countright == 2) {
-        rightHalfedgeModify->twin()->twin() = h0->twin()->next()->twin();
-        deleteHalfedge(h0->twin()->next());
-        deleteHalfedge(rightHalfedgeModify);
-        deleteFace(h0->twin()->face());
+        h8->next() = h8->next();
+        h8->twin() = h9;
+        h8->vertex() = v2;
+        h8->edge() = e1;
+        h8->face() = h8->face();
+        h9->next() = h9->next();
+        h9->twin() = h8;
+        h9->vertex() = v1;
+        h9->edge() = e1;
+        h9->face() = h9->face();
+        
+    //    deleteHalfedge(h3);
+        deleteHalfedge(h4);
+        deleteHalfedge(h5);
+        deleteEdge(e2);
+        deleteFace(f1);
     }
     else {
         rightHalfedgeModify->next() = h0->twin()->next();//change half edge
@@ -70,12 +126,151 @@ VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
     p1->position = (p0->position + p1->position) / 2;
     
     deleteEdge(e);
- //   deleteHalfedge(h0->twin());
- //   deleteHalfedge(h0);
- //   deleteVertex(h0->vertex());
-    //showError("collapseEdge() not implemented.");
-    return p1;
+    deleteHalfedge(h0);
+    deleteHalfedge(h3);
     
+    //showError("collapseEdge() not implemented.");
+    return v1;
+    
+}*/
+VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
+
+    // TODO: (meshEdit)
+    // This method should collapse the given edge and return an iterator to
+    // the new vertex created by the collapse.
+
+    auto vt1 = e->halfedge()->vertex();
+    auto vt2 = e->halfedge()->twin()->vertex();
+
+    // get intersection of the one ring of vt1 and vt2
+    int num_one_ring_shared_adjacent_verts = 0;
+
+
+
+    auto h = e->halfedge();
+    auto h_twin = h->twin();
+    auto newVtx = h->vertex();
+    auto delVtx = h_twin->vertex();
+
+    auto h1 = e->halfedge()->next();
+    auto h2 = e->halfedge()->twin()->next();
+    auto h1_twin = h1->twin();
+    auto h2_twin = h2->twin();
+    auto h1_prev = h1;
+    do {
+        h1_prev = h1_prev->next();
+    } while (h1_prev->next() != h);
+    auto h2_prev = h2;
+    do {
+        h2_prev = h2_prev->next();
+    } while (h2_prev->next() != h_twin);
+
+    // Triangular cases
+    if (h1->next() == h1_prev) {
+        // printf("First!\n");
+        auto e1 = h1->edge();
+        auto f1 = h1->face();
+        auto v1 = h1->vertex();
+        auto v2 = h1_twin->vertex();
+        auto f_nei = h1_twin->face();
+        auto h1_nei_next = h1_twin->next();
+        auto h1_nei_prev = h1_nei_next;
+        do {
+            h1_nei_prev = h1_nei_prev->next();
+        } while (h1_nei_prev->next() != h1_twin);
+
+        // half edges
+        h->next() = h1_nei_next;
+        h1_nei_prev->next() = h1_prev;
+
+        // vertices
+        v1->halfedge() = h_twin;
+        v2->halfedge() = h1_prev;
+
+        // face
+        f_nei->halfedge() = h1_nei_next;
+        h->face() = f_nei;
+        h1_prev->face() = f_nei;
+
+        // delete
+        deleteEdge(e1);
+        deleteFace(f1);
+        deleteHalfedge(h1_twin);
+        deleteHalfedge(h1);
+    }
+
+    if (h2->next() == h2_prev) {
+        // printf("Second\n");
+        auto e2 = h2->edge();
+        auto f2 = h2->face();
+        auto v1 = h2->vertex();
+        auto v2 = h2_twin->vertex();
+        auto f_nei = h2_twin->face();
+        auto h2_nei_next = h2_twin->next();
+        auto h2_nei_prev = h2_nei_next;
+        do {
+            h2_nei_prev = h2_nei_prev->next();
+        } while (h2_nei_prev->next() != h2_twin);
+
+        // half edges
+        h_twin->next() = h2_nei_next;
+        h2_nei_prev->next() = h2_prev;
+
+        // vertices
+        v1->halfedge() = h;
+        v2->halfedge() = h2_prev;
+
+        // face
+        f_nei->halfedge() = h2_nei_next;
+        h_twin->face() = f_nei;
+        h2_prev->face() = f_nei;
+
+        // delete
+        deleteEdge(e2);
+        deleteFace(f2);
+        deleteHalfedge(h2_twin);
+        deleteHalfedge(h2);
+    }
+
+    printf("Get Centroid\n");
+    Vector3D centroid = e->centroid();
+    auto f1 = h->face();
+    auto f2 = h_twin->face();
+
+    // half edges
+    auto currH = h->next();
+    int n = 0;
+    do {
+        currH->vertex() = newVtx;
+        currH = currH->twin()->next();
+        printf("No. %d\n", ++n);
+    } while (currH != h_twin);
+    h1_prev->next() = h->next();
+    h2_prev->next() = h_twin->next();
+    cout << "past do while edge collapse" << endl;
+    // vertex
+    newVtx->halfedge() = h1_prev->twin();
+    newVtx->position = centroid;
+
+    // face
+    f1->halfedge() = h1_prev;
+    f2->halfedge() = h2_prev;
+
+    printf("End of Edge Collapse: Cleanup\n");
+
+    // delete
+    //if (delVtx != newVtx) {
+    //  deleteVertex(delVtx);
+    //}
+    deleteVertex(delVtx);
+    deleteEdge(e);
+    deleteHalfedge(h);
+    deleteHalfedge(h_twin);
+
+    printf("New vertex Position\n");
+    cout << newVtx->position << endl;
+    //newVtx->collapseSuccess = true;
+    return newVtx;
 }
 
 VertexIter HalfedgeMesh::collapseFace(FaceIter f) {
@@ -220,7 +415,7 @@ EdgeIter HalfedgeMesh::flipEdge(EdgeIter e0) {
     f1->halfedge() = h4;
     //  mesh.deleteVertex(v4);
 
-    showError("flipEdge() not implemented.");
+  //  showError("flipEdge() not implemented.");
     return e0;//EdgeIter();
 }
 
