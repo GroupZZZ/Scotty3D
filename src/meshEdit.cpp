@@ -6,15 +6,147 @@
 
 namespace CMU462 {
 
-VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
-  // TODO: (meshEdit)
-  // This method should split the given edge and return an iterator to the
-  // newly inserted vertex. The halfedge of this vertex should point along
-  // the edge that was split, rather than the new edges.
+    VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
+        // TODO: (meshEdit)
+        // This method should split the given edge and return an iterator to the
+        // newly inserted vertex. The halfedge of this vertex should point along
+        // the edge that was split, rather than the new edges.
 
-  showError("splitEdge() not implemented.");
-  return VertexIter();
-}
+        HalfedgeIter h0 = e0->halfedge();
+        HalfedgeIter h1 = h0->next();
+        HalfedgeIter h2 = h1->next();
+        HalfedgeIter h3 = h0->twin();
+        HalfedgeIter h4 = h3->next();
+        HalfedgeIter h5 = h4->next();
+        HalfedgeIter h6 = h1->twin();
+        HalfedgeIter h7 = h2->twin();
+        HalfedgeIter h8 = h4->twin();
+        HalfedgeIter h9 = h5->twin();
+
+        // VERTICES
+        VertexIter v0 = h0->vertex();
+        VertexIter v1 = h3->vertex();
+        VertexIter v2 = h8->vertex();
+        VertexIter v3 = h6->vertex();
+        // ...you fill in the rest!...
+
+        // EDGES
+        EdgeIter e1 = h5->edge();
+        EdgeIter e2 = h4->edge();
+        EdgeIter e3 = h2->edge();
+        EdgeIter e4 = h1->edge();
+
+        // ...you fill in the rest!...
+
+        // FACES
+        FaceIter f0 = h0->face();
+        FaceIter f1 = h3->face();
+
+        HalfedgeIter h10 = newHalfedge();
+        HalfedgeIter h11 = newHalfedge();
+        HalfedgeIter h12 = newHalfedge();
+        HalfedgeIter h13 = newHalfedge();
+        HalfedgeIter h14 = newHalfedge();
+        HalfedgeIter h15 = newHalfedge();
+
+        EdgeIter e5 = newEdge();
+        EdgeIter e6 = newEdge();
+        EdgeIter e7 = newEdge();
+
+        FaceIter f2 = newFace();
+        FaceIter f3 = newFace();
+
+        VertexIter vN = newVertex();
+        vN->position = e0->centroid();
+
+        h0->next() = h1;
+        h0->twin() = h3;
+        h0->vertex() = vN;
+        h0->edge() = e0;
+        h0->face() = f0;
+
+        h1->next() = h10;
+        h1->twin() = h6;
+        h1->vertex() = v1;
+        h1->edge() = e4;
+        h1->face() = f0;
+
+        h10->next() = h0;
+        h10->twin() = h11;
+        h10->vertex() = v3;
+        h10->edge() = e6;
+        h10->face() = f0;
+
+
+        h3->next() = h12;
+        h3->twin() = h0;
+        h3->vertex() = v1;
+        h3->edge() = e0;
+        h3->face() = f1;
+        
+        h12->next() = h5;
+        h12->twin() = h13;
+        h12->vertex() = vN;
+        h12->edge() = e7;
+        h12->face() = f1;
+
+        h5->next() = h3;
+        h5->twin() = h9;
+        h5->vertex() = v2;
+        h5->edge() = e1;
+        h5->face() = f1;
+
+        h11->next() = h2;
+        h11->twin() = h10;
+        h11->vertex() = vN;
+        h11->edge() = e6;
+        h11->face() = f2;
+
+        h2->next() = h14;
+        h2->twin() = h7;
+        h2->vertex() = v3;
+        h2->edge() = e3;
+        h2->face() = f2;
+
+        h14->next() = h11;
+        h14->twin() = h15;
+        h14->vertex() = v0;
+        h14->edge() = e5;
+        h14->face() = f2;
+
+        h15->next() = h4;
+        h15->twin() = h14;
+        h15->vertex() = vN;
+        h15->edge() = e5;
+        h15->face() = f3;
+
+        h4->next() = h13;
+        h4->twin() = h8;
+        h4->vertex() = v0;
+        h4->edge() = e2;
+        h4->face() = f3;
+
+        h13->next() = h15;
+        h13->twin() = h12;
+        h13->vertex() = v2;
+        h13->edge() = e7;
+        h13->face() = f3;
+
+        e0->halfedge() = h0;
+        e6->halfedge() = h10;
+        e5->halfedge() = h14;
+        e7->halfedge() = h12;
+
+        vN->halfedge() = h0;
+
+        f0->halfedge() = h1;
+        f1->halfedge() = h5;
+        f2->halfedge() = h11;
+        f3->halfedge() = h4;
+
+        showError("splitEdge() not implemented.");
+        return vN;
+    }
 
 /*VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
     // TODO: (meshEdit)
