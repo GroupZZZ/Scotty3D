@@ -766,16 +766,137 @@ FaceIter HalfedgeMesh::bevelEdge(EdgeIter e) {
 }
 
 FaceIter HalfedgeMesh::bevelFace(FaceIter f) {
-  // TODO This method should replace the face f with an additional, inset face
-  // (and ring of faces around it), corresponding to a bevel operation. It
-  // should return the new face.  NOTE: This method is responsible for updating
-  // the *connectivity* of the mesh only---it does not need to update the vertex
-  // positions.  These positions will be updated in
-  // HalfedgeMesh::bevelFaceComputeNewPositions (which you also have to
-  // implement!)
+    // TODO This method should replace the face f with an additional, inset face
+    // (and ring of faces around it), corresponding to a bevel operation. It
+    // should return the new face.  NOTE: This method is responsible for updating
+    // the *connectivity* of the mesh only---it does not need to update the vertex
+    // positions.  These positions will be updated in
+    // HalfedgeMesh::bevelFaceComputeNewPositions (which you also have to
+    // implement!)
+    /*if (f->isBoundary()) { return f; }
 
-  showError("bevelFace() not implemented.");
-  return facesBegin();
+    size_t sides = f->degree();
+
+    vector<HalfedgeIter> new_h;
+    vector<VertexIter> new_v;
+    vector<EdgeIter> new_e;
+    vector<FaceIter> new_face;
+
+    HalfedgeIter old_h = f->halfedge();
+
+    //initialize pointers to new elems
+    for (size_t i = 0; i < sides; i++) {
+        //add #sides faces
+        new_face.push_back(newFace());
+        //add #sides vertices
+        new_v.push_back(newVertex());
+        //add 2*#sides edges
+        new_e.push_back(newEdge());
+        new_e.push_back(newEdge());
+        //add 4*#sides halfedges
+        new_h.push_back(newHalfedge());
+        new_h.push_back(newHalfedge());
+        new_h.push_back(newHalfedge());
+        new_h.push_back(newHalfedge());
+    }
+
+    //temp_h can save the value of old_h, before we change the next() of old_h
+    HalfedgeIter temp_h;
+
+    //set the relationship between elems
+    for (size_t i = 0; i < sides; i++) {
+        //old halfedge should change face and next
+        old_h->face() = new_face[i];
+
+        //initialize halfedge for newface
+        new_face[i]->halfedge() = old_h;
+
+        //initialize halfedge for newedge
+        new_e[i * 2]->halfedge() = new_h[4 * i];
+        new_e[i * 2 + 1]->halfedge() = new_h[i * 4 + 1];
+
+        //intialize halfedge for newvertex
+        new_v[i]->halfedge() = new_h[i * 4 + 1];
+        new_v[i]->position = old_h->next()->vertex()->position;
+
+        //intialize the value for newhalfedges
+        new_h[i * 4]->setNeighbors(new_h[i * 4 + 1], new_h[((i + 1) % sides) * 4 + 2], old_h->next()->vertex(), new_e[i * 2], new_face[i]);
+        new_h[i * 4 + 1]->setNeighbors(new_h[i * 4 + 2], new_h[i * 4 + 3], new_v[i], new_e[i * 2 + 1], new_face[i]);
+        new_h[i * 4 + 2]->setNeighbors(old_h, new_h[((i - 1 + sides) % sides) * 4], new_v[(i - 1 + sides) % sides], new_e[((i - 1 + sides) % sides) * 2], new_face[i]);
+        new_h[i * 4 + 3]->setNeighbors(new_h[((i + 1) % sides) * 4 + 3], new_h[i * 4 + 1], new_v[(i - 1 + sides) % sides], new_e[i * 2 + 1], f);
+
+        //save the value before go to next
+        temp_h = old_h;
+        old_h = old_h->next();
+        temp_h->next() = new_h[i * 4];
+    }
+
+    //assign halfedge to original face
+    f->halfedge() = new_h[3];
+
+    return f;
+    */
+    if (f->isBoundary()) { return f; }
+    int sides = f->degree();
+    vector<HalfedgeIter> new_h;
+    vector<VertexIter> new_v;
+    vector<EdgeIter> new_e;
+    vector<FaceIter> new_face;
+    HalfedgeIter old_h = f->halfedge();
+
+    for (int i = 0; i < sides; ++i) {
+        new_face.push_back(newFace());
+        new_v.push_back(newVertex());
+        new_e.push_back(newEdge());
+        new_e.push_back(newEdge());
+        new_h.push_back(newHalfedge());
+        new_h.push_back(newHalfedge());
+        new_h.push_back(newHalfedge());
+        new_h.push_back(newHalfedge());
+    //    old_h = old_h->next();
+    }
+    //FaceIter resultFace = f;
+    for (int i = 0; i < sides; ++i) {
+        old_h->face() = new_face[i];
+        auto temp = old_h->next();
+        old_h->next() = new_h[4 * i];
+
+        new_h[4 * i]->vertex() = temp->vertex();
+        new_h[4 * i]->next() = new_h[4 * i + 1];
+        new_h[4 * i]->edge() = new_e[2 * i];
+        new_h[4 * i]->twin() = new_h[(i + 1 == sides) ? 2 : 4 * (i + 1) + 2];//exceed!
+        new_h[4 * i]->face() = new_face[i];
+
+        new_h[4 * i + 1]->vertex() = new_v[i];
+        new_h[4 * i + 1]->next() = new_h[4 * i + 2];
+        new_h[4 * i + 1]->edge() = new_e[2 * i + 1];
+        new_h[4 * i + 1]->twin() = new_h[4 * i + 3];
+        new_h[4 * i + 1]->face() = new_face[i];
+
+        new_h[4 * i + 2]->vertex() = new_v[(i - 1 < 0) ? sides - 1 : i - 1];
+        new_h[4 * i + 2]->next() = old_h;
+        new_h[4 * i + 2]->edge() = new_e[(i - 1 < 0) ? 2 * (sides - 1) : 2 * (i - 1)];
+        new_h[4 * i + 2]->twin() = new_h[(i - 1 < 0) ? 4 * (sides - 1) : 4 * (i - 1)];
+        new_h[4 * i + 2]->face() = new_face[i];
+
+        new_h[4 * i + 3]->vertex() = new_v[(i - 1 < 0) ? sides - 1 : i - 1];
+        new_h[4 * i + 3]->next() = new_h[(i + 1 == sides) ? 3 : 4 * (i + 1) + 3];
+        new_h[4 * i + 3]->edge() = new_e[2 * i + 1];
+        new_h[4 * i + 3]->twin() = new_h[4 * i + 1];
+        new_h[4 * i + 3]->face() = f;
+
+        new_e[2 * i]->halfedge() = new_h[4 * i];
+        new_e[2 * i + 1]->halfedge() = new_h[4 * i + 1];
+        new_v[i]->halfedge() = new_h[4 * i + 1];
+        new_v[i]->position = temp->vertex()->position;
+        new_face[i]->halfedge() = old_h;
+
+        old_h = temp;
+        
+    }
+    f->halfedge() = new_h[3];
+    //showError("bevelFace() not implemented.");
+    return f;
 }
 
 
@@ -803,7 +924,17 @@ void HalfedgeMesh::bevelFaceComputeNewPositions(
   //    position correponding to vertex i
   // }
   //
+    FaceIter f = newHalfedges[0]->twin()->next()->twin()->face();
 
+    Vector3D f_norm = f->normal();
+    Vector3D f_center = f->centroid();
+
+    size_t n = originalVertexPositions.size();
+
+    for (size_t i = 0; i < n; i++) {
+        Vector3D pi = originalVertexPositions[i];
+        newHalfedges[i]->vertex()->position = newHalfedges[i]->vertex()->position + f_norm * normalShift + (f_center - pi) * tangentialInset;
+    }
 }
 
 void HalfedgeMesh::bevelVertexComputeNewPositions(
